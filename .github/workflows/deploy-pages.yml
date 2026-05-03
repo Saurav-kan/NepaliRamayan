@@ -28,9 +28,10 @@ jobs:
 
       - name: Build
         env:
-          VITE_BASE_PATH: /${{ github.event.repository.name }}/
-          # Starting page for new visitors (override without code changes)
-          VITE_DEFAULT_PAGE: "46"
+          # Apex custom domain (Namecheap + GitHub Pages): assets at site root
+          VITE_BASE_PATH: /
+          VITE_DEFAULT_PAGE: "1"
+          VITE_SITE_URL: https://nepaliramcharitmanas.me
         run: bun run build
 
       - name: Upload artifact

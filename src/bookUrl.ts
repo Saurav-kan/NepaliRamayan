@@ -6,4 +6,5 @@ export const BOOK_URL =
     ? envUrl.trim()
     : `${import.meta.env.BASE_URL}book.pdf`
 
-export const PAGE_STORAGE_KEY = 'nepali-ramayan-page'
+/** Display page (1…N). Bump when pagination rules change. */
+export const PAGE_STORAGE_KEY = 'nepali-ramayan-display-v3'

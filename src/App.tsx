@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { BottomNav } from './components/BottomNav'
 import { BookPage } from './pages/BookPage'
-import { EventPage } from './pages/EventPage'
+import { ChaptersPage } from './pages/ChaptersPage'
 
 export default function App() {
   return (
@@ -9,7 +9,8 @@ export default function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<BookPage />} />
-          <Route path="/event" element={<EventPage />} />
+          <Route path="/chapters" element={<ChaptersPage />} />
+          <Route path="/event" element={<Navigate to="/chapters" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

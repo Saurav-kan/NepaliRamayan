@@ -9,11 +9,11 @@ export function BottomNav() {
         </span>
         पुस्तक
       </NavLink>
-      <NavLink to="/event">
+      <NavLink to="/chapters">
         <span className="nav-icon" aria-hidden>
-          ℹ️
+          📑
         </span>
-        कार्यक्रम
+        Chapters
       </NavLink>
     </nav>
   )

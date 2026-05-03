@@ -1,18 +1,18 @@
-/**
- * First page for new visitors (no saved page in sessionStorage).
- *
- * Fastest code change: edit `FALLBACK_START_PAGE` below.
- * Or set `VITE_DEFAULT_PAGE` in `.env` / GitHub Actions (overrides the fallback).
- */
-const FALLBACK_START_PAGE = 46
+import { clampDisplayPage, DISPLAY_PAGE_COUNT } from './bookBounds'
 
-function readDefaultStartPage(): number {
+/**
+ * Default **display** page (1 = first image = PDF page 46).
+ * Edit `FALLBACK_START_DISPLAY` or set `VITE_DEFAULT_PAGE` (1 through DISPLAY_PAGE_COUNT).
+ */
+const FALLBACK_START_DISPLAY = 1
+
+function readDefaultStartDisplay(): number {
   const fromEnv = import.meta.env.VITE_DEFAULT_PAGE
   if (typeof fromEnv === 'string' && fromEnv.trim() !== '') {
     const n = parseInt(fromEnv.trim(), 10)
-    if (Number.isFinite(n) && n >= 1) return n
+    if (Number.isFinite(n) && n >= 1 && n <= DISPLAY_PAGE_COUNT) return n
   }
-  return FALLBACK_START_PAGE
+  return clampDisplayPage(FALLBACK_START_DISPLAY)
 }
 
-export const DEFAULT_START_PAGE = readDefaultStartPage()
+export const DEFAULT_START_DISPLAY = readDefaultStartDisplay()
