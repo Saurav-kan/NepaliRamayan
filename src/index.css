@@ -48,6 +48,33 @@ body {
   padding: 0.75rem 1rem 1rem;
 }
 
+.book-header {
+  text-align: center;
+  margin: 0 0 1.25rem;
+  padding: 0 0.25rem;
+}
+
+.book-header-line {
+  margin: 0;
+  line-height: 1.25;
+}
+
+.book-header-line--ne {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.book-header-line--en {
+  margin-top: 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
 .reader-card {
   background: var(--surface);
   border-radius: 1rem;
