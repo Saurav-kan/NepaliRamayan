@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   clampDisplayPage,
   DISPLAY_PAGE_COUNT,
   displayPageFileName,
 } from '../bookBounds'
-import { BOOK_URL, PAGE_STORAGE_KEY } from '../bookUrl'
+import { PAGE_STORAGE_KEY } from '../bookUrl'
 import { DEFAULT_START_DISPLAY } from '../readingConfig'
+
+const PAGE_NUMBERS = Array.from(
+  { length: DISPLAY_PAGE_COUNT },
+  (_, i) => i + 1,
+)
 
 function readStoredDisplayPage(): number {
   try {
@@ -19,98 +24,105 @@ function readStoredDisplayPage(): number {
 }
 
 export function BookReader() {
-  const [displayPage, setDisplayPage] = useState(readStoredDisplayPage)
-  const [imageError, setImageError] = useState(false)
-
-  useEffect(() => {
-    setImageError(false)
-  }, [displayPage])
-
-  useEffect(() => {
-    try {
-      sessionStorage.setItem(PAGE_STORAGE_KEY, String(displayPage))
-    } catch {
-      /* ignore */
-    }
-  }, [displayPage])
-
   const base = import.meta.env.BASE_URL
-  const imageSrc = useMemo(
-    () =>
-      `${base}book-pages/${displayPageFileName(displayPage)}`,
-    [base, displayPage],
-  )
+  const initialPage = readStoredDisplayPage()
+  const pageRefs = useRef<Map<number, HTMLElement>>(new Map())
+  const [loadErrors, setLoadErrors] = useState<Record<number, true>>({})
 
-  const pdfDownloadHref = useMemo(() => {
-    if (BOOK_URL.startsWith('http://') || BOOK_URL.startsWith('https://')) {
-      return BOOK_URL
+  // Restore scroll position once on load (session); refs ready after first paint.
+  useLayoutEffect(() => {
+    const el = pageRefs.current.get(initialPage)
+    requestAnimationFrame(() => {
+      el?.scrollIntoView({ behavior: 'instant', block: 'start' })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount
+  }, [])
+
+  useEffect(() => {
+    const scores = new Map<number, number>()
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const pageNum = Number(
+            (entry.target as HTMLElement).dataset.page ?? '1',
+          )
+          scores.set(pageNum, entry.intersectionRatio)
+        }
+        let bestPage = 1
+        let bestScore = 0
+        scores.forEach((score, p) => {
+          if (score > bestScore) {
+            bestScore = score
+            bestPage = p
+          }
+        })
+        if (bestScore > 0.05) {
+          try {
+            sessionStorage.setItem(PAGE_STORAGE_KEY, String(bestPage))
+          } catch {
+            /* ignore */
+          }
+        }
+      },
+      {
+        root: null,
+        threshold: [0, 0.05, 0.1, 0.2, 0.35, 0.5, 0.75, 1],
+      },
+    )
+
+    for (const p of PAGE_NUMBERS) {
+      const el = pageRefs.current.get(p)
+      if (el) io.observe(el)
     }
-    return new URL(BOOK_URL, window.location.origin).href
+
+    return () => io.disconnect()
   }, [])
 
-  const goPrev = () =>
-    setDisplayPage((p) => Math.max(1, p - 1))
-  const goNext = () =>
-    setDisplayPage((p) => Math.min(DISPLAY_PAGE_COUNT, p + 1))
-
-  const onPageInputChange = useCallback((value: string) => {
-    const n = parseInt(value, 10)
-    if (!Number.isFinite(n)) return
-    setDisplayPage(clampDisplayPage(n))
-  }, [])
+  const onImgError = (pageNum: number) => {
+    setLoadErrors((prev) => ({ ...prev, [pageNum]: true }))
+  }
 
   return (
-    <div className="reader-card">
-      <div className="reader-toolbar">
-        <button type="button" onClick={goPrev} disabled={displayPage <= 1}>
-          Previous
-        </button>
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={displayPage >= DISPLAY_PAGE_COUNT}
-        >
-          Next
-        </button>
-        <div className="page-field">
-          <label htmlFor="page-input">Page</label>
-          <input
-            id="page-input"
-            type="number"
-            min={1}
-            max={DISPLAY_PAGE_COUNT}
-            value={displayPage}
-            onChange={(e) => onPageInputChange(e.target.value)}
-            aria-label="Page number"
-          />
-          <span>/ {DISPLAY_PAGE_COUNT}</span>
-        </div>
+    <div className="reader-card reader-card--scroll">
+      <div className="reader-scroll">
+        {PAGE_NUMBERS.map((pageNum) => (
+          <figure
+            key={pageNum}
+            className="reader-page-block"
+            data-page={pageNum}
+            ref={(el) => {
+              if (el) pageRefs.current.set(pageNum, el)
+              else pageRefs.current.delete(pageNum)
+            }}
+          >
+            <figcaption className="reader-page-label">
+              <span className="reader-page-label-num">{pageNum}</span>
+              <span className="reader-page-label-sep" aria-hidden>
+                /
+              </span>
+              <span className="reader-page-label-total">
+                {DISPLAY_PAGE_COUNT}
+              </span>
+            </figcaption>
+            {loadErrors[pageNum] ? (
+              <p className="reader-page-error" role="alert">
+                Page image missing. Run{' '}
+                <code>bun run generate:pages</code> and deploy{' '}
+                <code>public/book-pages/</code>.
+              </p>
+            ) : (
+              <img
+                src={`${base}book-pages/${displayPageFileName(pageNum)}`}
+                alt={`Page ${pageNum} of ${DISPLAY_PAGE_COUNT}`}
+                loading="lazy"
+                decoding="async"
+                className="reader-page-img"
+                onError={() => onImgError(pageNum)}
+              />
+            )}
+          </figure>
+        ))}
       </div>
-
-      <div className="reader-canvas reader-canvas--image">
-        {imageError ? (
-          <p className="reader-error" role="alert">
-            Page image failed to load. Run{' '}
-            <code style={{ fontSize: '0.85em' }}>bun run generate:pages</code> locally
-            and deploy <code style={{ fontSize: '0.85em' }}>public/book-pages/*.webp</code>.
-          </p>
-        ) : (
-          <img
-            src={imageSrc}
-            alt={`Page ${displayPage} of ${DISPLAY_PAGE_COUNT}`}
-            loading="lazy"
-            decoding="async"
-            className="reader-page-img"
-            onError={() => setImageError(true)}
-          />
-        )}
-      </div>
-
-      <p className="reader-download-row">
-        <a href={pdfDownloadHref} download className="reader-download-link">
-          Download PDF
-        </a>
-      </p>
     </div>
   )
 }

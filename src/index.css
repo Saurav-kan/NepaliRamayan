@@ -1,11 +1,13 @@
 :root {
   --font-sans: 'Noto Sans Devanagari', system-ui, sans-serif;
-  --bg: #f7f4ef;
-  --surface: #fffef9;
+  --bg: #faf8f5;
+  --surface: #fffefc;
   --text: #1c1917;
   --muted: #57534e;
-  --accent: #9f1239;
-  --accent-soft: #fce7f3;
+  --accent: #c41e3a;
+  --accent-deep: #9f1239;
+  --accent-soft: #ffe4e6;
+  --accent-border: rgba(196, 30, 58, 0.35);
   --border: #e7e5e4;
 }
 
@@ -37,7 +39,7 @@ body {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .app-main {
@@ -51,7 +53,8 @@ body {
 .book-header {
   text-align: center;
   margin: 0 0 1.25rem;
-  padding: 0 0.25rem;
+  padding: 0 0.25rem 1rem;
+  border-bottom: 3px solid var(--accent);
 }
 
 .book-header-line {
@@ -62,7 +65,7 @@ body {
 .book-header-line--ne {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text);
+  color: var(--accent-deep);
   letter-spacing: 0.02em;
 }
 
@@ -71,79 +74,77 @@ body {
   font-size: 1rem;
   font-weight: 600;
   color: var(--muted);
-  letter-spacing: 0.04em;
-  text-transform: none;
+  letter-spacing: 0.06em;
 }
 
 .reader-card {
   background: var(--surface);
   border-radius: 1rem;
   border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
   overflow: hidden;
-  box-shadow: 0 8px 30px rgba(28, 25, 23, 0.06);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent),
+    0 12px 40px rgba(28, 25, 23, 0.08);
 }
 
-.reader-toolbar {
+.reader-card--scroll {
+  overflow: visible;
+}
+
+.reader-scroll {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0;
+  background: linear-gradient(
+    180deg,
+    var(--accent-soft) 0%,
+    #e7e5e4 12%,
+    #e7e5e4 100%
+  );
+}
+
+.reader-page-block {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid var(--accent-border);
+}
+
+.reader-page-block:last-child {
+  border-bottom: none;
+}
+
+.reader-page-label {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-}
-
-.reader-toolbar button {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 0.65rem;
-  background: var(--bg);
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.reader-toolbar button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.reader-toolbar .page-field {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: auto;
-  font-size: 0.9rem;
-  color: var(--muted);
-}
-
-.reader-toolbar input[type='number'] {
-  width: 3.25rem;
-  min-height: 44px;
-  padding: 0 0.35rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  font-family: inherit;
-  font-size: 1rem;
-  text-align: center;
-  background: var(--surface);
-}
-
-.reader-canvas {
-  display: flex;
   justify-content: center;
-  padding: 0.75rem;
-  background: #e7e5e4;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--accent-deep);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent-soft) 85%, white) 0%,
+    var(--surface) 100%
+  );
+  border-bottom: 1px solid var(--accent-border);
 }
 
-.reader-canvas--image {
-  padding: 0.5rem;
+.reader-page-label-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.reader-page-label-sep {
+  opacity: 0.45;
+  font-weight: 500;
+}
+
+.reader-page-label-total {
+  font-weight: 600;
+  opacity: 0.75;
 }
 
 .reader-page-img {
@@ -153,27 +154,17 @@ body {
   max-width: 100%;
 }
 
-.reader-download-row {
+.reader-page-error {
   margin: 0;
-  padding: 0.65rem 1rem 0.85rem;
-  text-align: center;
-  border-top: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.reader-download-link {
+  padding: 1.5rem 1rem;
   font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-.reader-error {
-  padding: 1.25rem;
   color: #991b1b;
   background: #fef2f2;
-  border-radius: 0.75rem;
-  margin: 1rem;
-  font-size: 0.95rem;
+  text-align: center;
+}
+
+.reader-page-error code {
+  font-size: 0.85em;
 }
 
 .sr-only {
