@@ -3,15 +3,16 @@ import { Document, Page } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { BOOK_URL, PAGE_STORAGE_KEY } from '../bookUrl'
+import { DEFAULT_START_PAGE } from '../readingConfig'
 
 function readStoredPage(): number {
   try {
     const raw = sessionStorage.getItem(PAGE_STORAGE_KEY)
-    if (!raw) return 1
+    if (!raw) return DEFAULT_START_PAGE
     const n = parseInt(raw, 10)
-    return Number.isFinite(n) && n >= 1 ? n : 1
+    return Number.isFinite(n) && n >= 1 ? n : DEFAULT_START_PAGE
   } catch {
-    return 1
+    return DEFAULT_START_PAGE
   }
 }
 
@@ -83,17 +84,17 @@ export function PdfReader() {
     <div className="reader-card">
       <div className="reader-toolbar">
         <button type="button" onClick={goPrev} disabled={pageNumber <= 1}>
-          अघिल्लो
+          Previous
         </button>
         <button
           type="button"
           onClick={goNext}
           disabled={!numPages || pageNumber >= numPages}
         >
-          पछिल्लो
+          Next
         </button>
         <div className="page-field">
-          <label htmlFor="page-input">पृष्ठ</label>
+          <label htmlFor="page-input">Page</label>
           <input
             id="page-input"
             type="number"
@@ -101,7 +102,7 @@ export function PdfReader() {
             max={numPages ?? undefined}
             value={pageNumber}
             onChange={(e) => onPageInputChange(e.target.value)}
-            aria-label="पृष्ठ नम्बर"
+            aria-label="Page number"
           />
           {numPages != null ? (
             <span>/ {numPages}</span>
@@ -123,12 +124,14 @@ export function PdfReader() {
             onLoadError={onDocumentLoadError}
             loading={<p className="reader-status">लोड हुँदैछ…</p>}
           >
-            <Page
-              pageNumber={pageNumber}
-              width={pageWidth}
-              renderTextLayer
-              renderAnnotationLayer
-            />
+            {numPages != null ? (
+              <Page
+                pageNumber={Math.min(pageNumber, numPages)}
+                width={pageWidth}
+                renderTextLayer
+                renderAnnotationLayer
+              />
+            ) : null}
           </Document>
         )}
       </div>
